@@ -2,9 +2,8 @@ name: Financial Daily Newsletter
 
 on:
   schedule:
-    # 07:30 España (verano UTC+2 → 05:30 UTC | invierno UTC+1 → 06:30 UTC)
-    # Ajusta el cron si cambias de horario de verano/invierno
-    - cron: '30 5 * * 1-5'   # Lunes a Viernes 07:30 hora España (verano)
+    # 08:30 Chile (invierno CLT UTC-4 → 12:30 UTC | verano CLST UTC-3 → ajustar a '30 11 * * 1-5')
+    - cron: '30 12 * * 1-5'  # Lunes a Viernes 08:30 hora Chile (invierno)
   workflow_dispatch:           # Permite lanzar manualmente desde GitHub
 
 jobs:
