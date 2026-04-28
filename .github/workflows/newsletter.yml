@@ -30,7 +30,6 @@ jobs:
           cat > .env << 'ENVEOF'
           FINVIZ_EMAIL=${{ secrets.FINVIZ_EMAIL }}
           FINVIZ_PASSWORD=${{ secrets.FINVIZ_PASSWORD }}
-          FRED_API_KEY=${{ secrets.FRED_API_KEY }}
           EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}
           EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
           EMAIL_RECIPIENTS=${{ secrets.EMAIL_RECIPIENTS }}

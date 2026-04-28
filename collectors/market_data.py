@@ -1,10 +1,16 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import pandas as pd
 import yfinance as yf
 
 logger = logging.getLogger(__name__)
+
+YIELD_TICKERS = [
+    ("^IRX", "T-Bill 3M"),
+    ("^FVX", "Treasury 5Y"),
+    ("^TNX", "Treasury 10Y"),
+    ("^TYX", "Treasury 30Y"),
+]
 
 US_INDICES = [
     ("^GSPC",    "S&P 500"),
@@ -108,14 +114,65 @@ def _build_row(ticker: str, name: str, unit: str = "") -> dict:
     }
 
 
+def _fetch_yield(ticker: str, label: str) -> dict:
+    try:
+        closes = yf.Ticker(ticker).history(period="5d")["Close"].dropna()
+        if len(closes) < 2:
+            return {"name": label, "value": "-", "change": "-", "change_positive": None, "date": "-"}
+        current = round(float(closes.iloc[-1]), 2)
+        prev    = round(float(closes.iloc[-2]), 2)
+        bps     = round((current - prev) * 100, 1)
+        return {
+            "name":            label,
+            "value":           f"{current:.2f}%",
+            "change":          f"{bps:+.0f} bps",
+            "change_positive": bps <= 0,
+            "date":            closes.index[-1].strftime("%d %b"),
+        }
+    except Exception as e:
+        logger.warning(f"Yield fetch error [{ticker}]: {e}")
+        return {"name": label, "value": "-", "change": "-", "change_positive": None, "date": "-"}
+
+
+def _fetch_vix() -> dict:
+    try:
+        closes = yf.Ticker("^VIX").history(period="5d")["Close"].dropna()
+        if len(closes) < 2:
+            return {}
+        current = round(float(closes.iloc[-1]), 1)
+        chg     = round(current - float(closes.iloc[-2]), 2)
+        return {
+            "value":           f"{current:.1f}",
+            "change":          f"{chg:+.2f}",
+            "change_positive": chg <= 0,
+            "date":            closes.index[-1].strftime("%d %b"),
+        }
+    except Exception as e:
+        logger.warning(f"VIX fetch error: {e}")
+        return {}
+
+
 def collect() -> dict:
     logger.info("Collecting market data from Yahoo Finance...")
 
-    us_markets = [_build_row(t, n) for t, n in US_INDICES]
-    eu_markets = [_build_row(t, n) for t, n in EU_INDICES]
+    us_markets    = [_build_row(t, n) for t, n in US_INDICES]
+    eu_markets    = [_build_row(t, n) for t, n in EU_INDICES]
     latam_markets = [_build_row(t, n) for t, n in LATAM_INDICES]
-    commodities = [_build_row(t, n, u) for t, n, u in COMMODITIES]
-    fx_rates = [_build_row(t, n) for t, n in FX_PAIRS]
+    commodities   = [_build_row(t, n, u) for t, n, u in COMMODITIES]
+    fx_rates      = [_build_row(t, n) for t, n in FX_PAIRS]
+    yields        = [_fetch_yield(t, l) for t, l in YIELD_TICKERS]
+    vix           = _fetch_vix()
+
+    # Yield curve: 10Y minus 3M
+    yield_curve = None
+    try:
+        tnx = yf.Ticker("^TNX").history(period="5d")["Close"].dropna()
+        irx = yf.Ticker("^IRX").history(period="5d")["Close"].dropna()
+        if not tnx.empty and not irx.empty:
+            spread_bps = round((float(tnx.iloc[-1]) - float(irx.iloc[-1])) * 100)
+            yield_curve = {"value": f"{spread_bps:+d} bps", "change_positive": spread_bps >= 0}
+    except Exception as e:
+        logger.warning(f"Yield curve calc error: {e}")
 
     logger.info("Market data collected.")
     return {
@@ -124,4 +181,7 @@ def collect() -> dict:
         "latam_markets": latam_markets,
         "commodities":   commodities,
         "fx_rates":      fx_rates,
+        "yields":        yields,
+        "vix":           vix,
+        "yield_curve":   yield_curve,
     }

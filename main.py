@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import config
-from collectors import finviz_collector, macro_data, market_data
+from collectors import finviz_collector, market_data
 from generators import newsletter
 from sender import email_sender
 
@@ -34,8 +34,6 @@ def validate_config() -> list[str]:
         errors.append("FINVIZ_EMAIL no configurado")
     if not config.FINVIZ_PASSWORD:
         errors.append("FINVIZ_PASSWORD no configurado")
-    if not config.FRED_API_KEY:
-        errors.append("FRED_API_KEY no configurado")
     if not config.EMAIL_SENDER:
         errors.append("EMAIL_SENDER no configurado")
     if not config.EMAIL_PASSWORD:
@@ -58,21 +56,17 @@ def run() -> bool:
         logger.error("Revisa el archivo .env y vuelve a intentarlo.")
         return False
 
-    # 1. Collect macro data (FRED)
-    logger.info("Recopilando datos macroeconómicos (FRED)...")
-    macro = macro_data.collect(config.FRED_API_KEY)
-
-    # 2. Collect market data (Yahoo Finance)
+    # 1. Collect market data (Yahoo Finance)
     logger.info("Recopilando datos de mercado (Yahoo Finance)...")
     market = market_data.collect()
 
-    # 3. Collect Finviz Elite data
+    # 2. Collect Finviz Elite data
     logger.info("Recopilando datos de Finviz Elite...")
     finviz = finviz_collector.collect(config.FINVIZ_EMAIL, config.FINVIZ_PASSWORD)
 
-    # 4. Render newsletter HTML
+    # 3. Render newsletter HTML
     logger.info("Generando HTML del newsletter...")
-    html = newsletter.render(macro=macro, market=market, finviz=finviz)
+    html = newsletter.render(market=market, finviz=finviz)
 
     # Save local HTML copy for debugging
     output_path = Path(__file__).parent / "output_latest.html"

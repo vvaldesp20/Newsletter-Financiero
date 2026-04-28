@@ -237,6 +237,80 @@ def get_analyst_ratings(session: requests.Session, count: int = 8) -> list[dict]
         return []
 
 
+def get_economic_calendar(session: requests.Session, max_events: int = 20) -> list[dict]:
+    try:
+        resp = session.get(f"{BASE_URL}/calendar.ashx", timeout=15)
+        soup = BeautifulSoup(resp.text, "lxml")
+
+        table = (soup.find("table", id="calendar") or
+                 soup.find("table", class_="calendar-table") or
+                 soup.find("table", attrs={"data-testid": "calendar-table"}))
+
+        if not table:
+            for t in soup.find_all("table"):
+                text = t.get_text()
+                if any(kw in text for kw in ["High", "Medium", "NFP", "CPI", "GDP"]):
+                    table = t
+                    break
+
+        if not table:
+            logger.warning("Finviz: economic calendar table not found")
+            return []
+
+        events = []
+        current_date = ""
+
+        for row in table.find_all("tr"):
+            cells = row.find_all("td")
+            if not cells:
+                continue
+
+            if len(cells) == 1 or (len(cells) > 1 and cells[0].get("colspan")):
+                text = cells[0].get_text(strip=True)
+                if text:
+                    current_date = text
+                continue
+
+            if len(cells) < 4:
+                continue
+
+            time_text    = cells[0].get_text(strip=True)
+            country_cell = cells[1]
+            country_img  = country_cell.find("img")
+            country      = country_img.get("alt", country_cell.get_text(strip=True)) if country_img else country_cell.get_text(strip=True)
+
+            impact_cell  = cells[2]
+            impact_img   = impact_cell.find("img")
+            impact       = (impact_img.get("alt") or impact_img.get("title") or "") if impact_img else impact_cell.get_text(strip=True)
+
+            event_name   = cells[3].get_text(strip=True) if len(cells) > 3 else ""
+            actual       = cells[4].get_text(strip=True) if len(cells) > 4 else ""
+            forecast     = cells[5].get_text(strip=True) if len(cells) > 5 else ""
+            previous     = cells[6].get_text(strip=True) if len(cells) > 6 else ""
+
+            if event_name:
+                events.append({
+                    "date":     current_date,
+                    "time":     time_text,
+                    "country":  country,
+                    "impact":   impact,
+                    "event":    event_name,
+                    "actual":   actual,
+                    "forecast": forecast,
+                    "previous": previous,
+                })
+
+            if len(events) >= max_events:
+                break
+
+        logger.info(f"Economic calendar: {len(events)} events fetched")
+        return events
+
+    except Exception as e:
+        logger.error(f"Finviz calendar error: {e}")
+        return []
+
+
 def collect(email: str, password: str) -> dict:
     session = _login(email, password)
     return {
@@ -245,4 +319,5 @@ def collect(email: str, password: str) -> dict:
         "gainers":         get_top_gainers(session, count=8),
         "losers":          get_top_losers(session, count=8),
         "analyst_ratings": get_analyst_ratings(session, count=8),
+        "calendar":        get_economic_calendar(session, max_events=20),
     }

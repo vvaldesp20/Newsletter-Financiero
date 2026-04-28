@@ -99,45 +99,46 @@
       </tr>
       {% endif %}
 
-      {# ========== MACRO ========== #}
+      {# ========== MACRO / CALENDARIO ECONÓMICO ========== #}
       <tr>
         <td style="padding:28px 36px 10px;">
           <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #3498DB;padding-bottom:7px;margin-bottom:14px;">
             🏦&nbsp; ENTORNO MACROECONÓMICO
           </div>
 
-          {# General macro #}
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;margin-bottom:16px;">
+          {# VIX #}
+          {% if vix and vix.value %}
+          <div style="background:#F0F4F8;border-radius:4px;padding:10px 14px;font-size:12px;display:inline-block;margin-bottom:14px;">
+            <span style="color:#5D6D7E;">VIX (volatilidad implícita S&P500): </span>
+            <strong style="color:#1B2A4A;">{{ vix.value }}</strong>
+            <span style="font-weight:600;color:{{ '#27AE60' if vix.change_positive else '#E74C3C' }};">&nbsp;{{ vix.change }}</span>
+            <span style="color:#95A5A6;font-size:11px;"> ({{ vix.date }})</span>
+          </div>
+          {% endif %}
+
+          {# Calendario económico Finviz #}
+          {% if calendar %}
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px;">Calendario Económico (Finviz Elite)</div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:11px;">
             <tr style="background:#2C3E50;">
-              <th style="color:#FFF;padding:8px 10px;text-align:left;">Indicador</th>
-              <th style="color:#FFF;padding:8px 10px;text-align:right;">Valor</th>
-              <th style="color:#FFF;padding:8px 10px;text-align:right;">Variación</th>
-              <th style="color:#FFF;padding:8px 10px;text-align:center;">Período</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Fecha</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Hora</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">País</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Evento</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:right;">Actual</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:right;">Prev.</th>
             </tr>
-            {% for key in ["fed_rate","cpi","core_cpi","core_pce","unemployment","gdp"] %}
-            {% if key in macro %}
-            {% set m = macro[key] %}
+            {% for e in calendar %}
             <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
-              <td style="padding:7px 10px;color:#2C3E50;">{{ m.label }}</td>
-              <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ m.value }}</td>
-              <td style="padding:7px 10px;text-align:right;color:#5D6D7E;">
-                {{ m.change if m.change else "-" }}
-              </td>
-              <td style="padding:7px 10px;text-align:center;color:#95A5A6;font-size:11px;">{{ m.date }}</td>
+              <td style="padding:5px 8px;color:#95A5A6;white-space:nowrap;">{{ e.date }}</td>
+              <td style="padding:5px 8px;color:#95A5A6;white-space:nowrap;">{{ e.time }}</td>
+              <td style="padding:5px 8px;color:#5D6D7E;">{{ e.country }}</td>
+              <td style="padding:5px 8px;color:#2C3E50;font-weight:500;">{{ e.event }}</td>
+              <td style="padding:5px 8px;text-align:right;font-weight:700;color:#1B2A4A;">{{ e.actual or "-" }}</td>
+              <td style="padding:5px 8px;text-align:right;color:#5D6D7E;">{{ e.previous or "-" }}</td>
             </tr>
-            {% endif %}
             {% endfor %}
           </table>
-
-          {# VIX #}
-          {% if "vix" in macro %}
-          {% set v = macro["vix"] %}
-          <div style="background:#F0F4F8;border-radius:4px;padding:10px 14px;font-size:12px;display:inline-block;margin-bottom:6px;">
-            <span style="color:#5D6D7E;">VIX: </span>
-            <strong style="color:#1B2A4A;">{{ v.value }}</strong>
-            <span style="{{ flag(v.change_pct if v.change_pct is defined else none, false) }}">{{ v.change }}</span>
-            <span style="color:#95A5A6;font-size:11px;"> ({{ v.date }})</span>
-          </div>
           {% endif %}
         </td>
       </tr>
@@ -200,50 +201,27 @@
               <th style="color:#FFF;padding:8px 10px;text-align:right;">Var. Día</th>
               <th style="color:#FFF;padding:8px 10px;text-align:center;">Fecha</th>
             </tr>
-            {% for key in ["yield_2y","yield_5y","yield_10y","yield_30y"] %}
-            {% if key in macro %}
-            {% set y = macro[key] %}
+            {% for y in yields %}
             <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
-              <td style="padding:7px 10px;color:#2C3E50;font-weight:500;">{{ y.label }}</td>
+              <td style="padding:7px 10px;color:#2C3E50;font-weight:500;">{{ y.name }}</td>
               <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ y.value }}</td>
               <td style="padding:7px 10px;text-align:right;font-weight:600;color:{{ '#27AE60' if y.change_positive else '#E74C3C' }};">{{ y.change }}</td>
               <td style="padding:7px 10px;text-align:center;color:#95A5A6;font-size:11px;">{{ y.date }}</td>
             </tr>
-            {% endif %}
+            {% else %}
+            <tr><td colspan="4" style="padding:10px;color:#7F8C8D;text-align:center;">Sin datos disponibles</td></tr>
             {% endfor %}
           </table>
 
-          {% if "yield_curve" in macro %}
-          {% set yc = macro["yield_curve"] %}
+          {% if yield_curve %}
           <div style="background:#FFF8E1;border-left:3px solid #F39C12;padding:10px 14px;border-radius:0 4px 4px 0;margin-bottom:16px;font-size:12px;">
-            <strong>Curva 10Y-2Y:</strong>
-            <span style="font-weight:700;color:{{ '#27AE60' if yc.change_positive else '#E74C3C' }};">{{ yc.value }}</span>
-            {% if not yc.change_positive %}
+            <strong>Curva 10Y-3M:</strong>
+            <span style="font-weight:700;color:{{ '#27AE60' if yield_curve.change_positive else '#E74C3C' }};">{{ yield_curve.value }}</span>
+            {% if not yield_curve.change_positive %}
             &nbsp;<span style="color:#E74C3C;">⚠️ Curva invertida</span>
             {% endif %}
           </div>
           {% endif %}
-
-          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px;">Spreads de Crédito</div>
-          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;">
-            <tr style="background:#2C3E50;">
-              <th style="color:#FFF;padding:8px 10px;text-align:left;">Indicador</th>
-              <th style="color:#FFF;padding:8px 10px;text-align:right;">Spread</th>
-              <th style="color:#FFF;padding:8px 10px;text-align:right;">Var. Día</th>
-              <th style="color:#FFF;padding:8px 10px;text-align:center;">Fecha</th>
-            </tr>
-            {% for key in ["hy_spread","ig_spread"] %}
-            {% if key in macro %}
-            {% set sp = macro[key] %}
-            <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
-              <td style="padding:7px 10px;color:#2C3E50;">{{ sp.label }}</td>
-              <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ sp.value }}</td>
-              <td style="padding:7px 10px;text-align:right;font-weight:600;color:{{ '#27AE60' if sp.change_positive else '#E74C3C' }};">{{ sp.change }}</td>
-              <td style="padding:7px 10px;text-align:center;color:#95A5A6;font-size:11px;">{{ sp.date }}</td>
-            </tr>
-            {% endif %}
-            {% endfor %}
-          </table>
         </td>
       </tr>
 
@@ -381,7 +359,7 @@
         <td style="background:#2C3E50;padding:20px 36px;margin-top:10px;">
           <p style="color:#A8C4E0;font-size:11px;margin:0;text-align:center;letter-spacing:.3px;">
             Generado automáticamente el <strong>{{ date }}</strong> a las {{ time }}
-            &nbsp;|&nbsp; Fuentes: Finviz Elite · FRED API · Yahoo Finance
+            &nbsp;|&nbsp; Fuentes: Finviz Elite · Yahoo Finance
           </p>
           <p style="color:#566573;font-size:10px;margin:6px 0 0;text-align:center;">
             Este newsletter es solo para uso informativo y no constituye asesoramiento financiero.
