@@ -38,13 +38,15 @@ def render(
         # FX & Commodities
         "fx_rates":    market.get("fx_rates", []),
         "commodities": market.get("commodities", []),
+        # Sectors (yfinance ETFs)
+        "sectors":         market.get("sectors", []),
         # Finviz
-        "sectors":         finviz.get("sectors", []),
         "gainers":         finviz.get("gainers", []),
         "losers":          finviz.get("losers", []),
         "analyst_ratings": finviz.get("analyst_ratings", []),
         "news":            finviz.get("news", []),
         "calendar":        finviz.get("calendar", []),
+        "stock_ideas":     finviz.get("stock_ideas", []),
     }
 
     html = template.render(**context)

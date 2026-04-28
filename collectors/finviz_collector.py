@@ -237,6 +237,25 @@ def get_analyst_ratings(session: requests.Session, count: int = 8) -> list[dict]
         return []
 
 
+def get_stock_ideas(session: requests.Session, count: int = 5) -> list[str]:
+    """Quality + momentum screener: positive EPS growth, price > $10, avg vol > 500K, sorted by 1W perf."""
+    try:
+        url = (
+            f"{BASE_URL}/screener.ashx?"
+            "v=111&f=fa_eps5years_pos,fa_epsyoy_pos,sh_price_o10,sh_avgvol_o500,geo_usa"
+            "&o=-perf1w&r=1"
+        )
+        resp = session.get(url, timeout=15)
+        soup = BeautifulSoup(resp.text, "lxml")
+        items = _parse_screener_table(soup, count)
+        tickers = [item["ticker"] for item in items if item.get("ticker")]
+        logger.info(f"Stock idea tickers: {tickers}")
+        return tickers
+    except Exception as e:
+        logger.error(f"Finviz stock ideas error: {e}")
+        return []
+
+
 def get_economic_calendar(session: requests.Session, max_events: int = 20) -> list[dict]:
     try:
         resp = session.get(f"{BASE_URL}/calendar.ashx", timeout=15)
@@ -314,10 +333,10 @@ def get_economic_calendar(session: requests.Session, max_events: int = 20) -> li
 def collect(email: str, password: str) -> dict:
     session = _login(email, password)
     return {
-        "news":            get_news(session, count=20),
-        "sectors":         get_sector_performance(session),
-        "gainers":         get_top_gainers(session, count=8),
-        "losers":          get_top_losers(session, count=8),
-        "analyst_ratings": get_analyst_ratings(session, count=8),
-        "calendar":        get_economic_calendar(session, max_events=20),
+        "news":               get_news(session, count=20),
+        "gainers":            get_top_gainers(session, count=8),
+        "losers":             get_top_losers(session, count=8),
+        "analyst_ratings":    get_analyst_ratings(session, count=8),
+        "calendar":           get_economic_calendar(session, max_events=20),
+        "stock_idea_tickers": get_stock_ideas(session, count=5),
     }

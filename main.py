@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import config
-from collectors import finviz_collector, market_data
+from collectors import finviz_collector, market_data, stock_analysis
 from generators import newsletter
 from sender import email_sender
 
@@ -64,7 +64,11 @@ def run() -> bool:
     logger.info("Recopilando datos de Finviz Elite...")
     finviz = finviz_collector.collect(config.FINVIZ_EMAIL, config.FINVIZ_PASSWORD)
 
-    # 3. Render newsletter HTML
+    # 3. Analyze stock ideas with yfinance fundamentals
+    logger.info("Analizando ideas de inversión...")
+    finviz["stock_ideas"] = stock_analysis.analyze(finviz.get("stock_idea_tickers", []))
+
+    # 4. Render newsletter HTML
     logger.info("Generando HTML del newsletter...")
     html = newsletter.render(market=market, finviz=finviz)
 

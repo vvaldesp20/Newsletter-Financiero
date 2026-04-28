@@ -12,6 +12,20 @@ YIELD_TICKERS = [
     ("^TYX", "Treasury 30Y"),
 ]
 
+SECTOR_ETFS = [
+    ("XLK",  "Tecnología"),
+    ("XLC",  "Comunicaciones"),
+    ("XLY",  "Consumo Discrecional"),
+    ("XLF",  "Financiero"),
+    ("XLV",  "Salud"),
+    ("XLI",  "Industrial"),
+    ("XLE",  "Energía"),
+    ("XLB",  "Materiales"),
+    ("XLRE", "Inmobiliario"),
+    ("XLP",  "Consumo Básico"),
+    ("XLU",  "Utilities"),
+]
+
 US_INDICES = [
     ("^GSPC",    "S&P 500"),
     ("^IXIC",    "NASDAQ Composite"),
@@ -59,16 +73,28 @@ FX_PAIRS = [
 def _fetch_quote(ticker: str) -> dict | None:
     try:
         t = yf.Ticker(ticker)
+        try:
+            fi    = t.fast_info
+            price = getattr(fi, "last_price", None)
+            prev  = getattr(fi, "previous_close", None) or getattr(fi, "regular_market_previous_close", None)
+            if price and prev and float(price) > 0 and float(prev) > 0:
+                return {
+                    "price":      float(price),
+                    "prev":       float(prev),
+                    "change_pct": round(((float(price) - float(prev)) / float(prev)) * 100, 2),
+                    "date":       datetime.now().strftime("%d %b"),
+                }
+        except Exception:
+            pass
         hist = t.history(period="5d", interval="1d")
         if hist.empty or len(hist) < 2:
             return None
-        close_today = hist["Close"].iloc[-1]
-        close_prev  = hist["Close"].iloc[-2]
-        change_pct  = ((close_today - close_prev) / close_prev) * 100
+        price = float(hist["Close"].iloc[-1])
+        prev  = float(hist["Close"].iloc[-2])
         return {
-            "price":      close_today,
-            "prev":       close_prev,
-            "change_pct": round(change_pct, 2),
+            "price":      price,
+            "prev":       prev,
+            "change_pct": round(((price - prev) / prev) * 100, 2),
             "date":       hist.index[-1].strftime("%d %b"),
         }
     except Exception as e:
@@ -160,6 +186,7 @@ def collect() -> dict:
     latam_markets = [_build_row(t, n) for t, n in LATAM_INDICES]
     commodities   = [_build_row(t, n, u) for t, n, u in COMMODITIES]
     fx_rates      = [_build_row(t, n) for t, n in FX_PAIRS]
+    sectors       = [_build_row(t, n) for t, n in SECTOR_ETFS]
     yields        = [_fetch_yield(t, l) for t, l in YIELD_TICKERS]
     vix           = _fetch_vix()
 
@@ -181,6 +208,7 @@ def collect() -> dict:
         "latam_markets": latam_markets,
         "commodities":   commodities,
         "fx_rates":      fx_rates,
+        "sectors":       sectors,
         "yields":        yields,
         "vix":           vix,
         "yield_curve":   yield_curve,
