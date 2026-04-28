@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Financial Daily – {{ date }}</title>
+</head>
+<body style="margin:0;padding:0;background:#EAECF0;font-family:Arial,Helvetica,sans-serif;">
+
+{# ===================== MACROS ===================== #}
+{% macro pct_color(val) %}{{ "#27AE60" if val is not none and val >= 0 else "#E74C3C" }}{% endmacro %}
+{% macro pct_str(val) %}{{ "%+.2f%%" | format(val) if val is not none else "-" }}{% endmacro %}
+{% macro flag(val, positive_is_good=true) %}
+  {% if val is none %}color:#7F8C8D;
+  {% elif positive_is_good and val >= 0 %}color:#27AE60;
+  {% elif positive_is_good and val < 0 %}color:#E74C3C;
+  {% elif not positive_is_good and val <= 0 %}color:#27AE60;
+  {% else %}color:#E74C3C;{% endif %}
+{% endmacro %}
+
+{% macro market_table(rows) %}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;">
+  <tr style="background:#2C3E50;">
+    <th style="color:#FFFFFF;padding:8px 10px;text-align:left;font-weight:600;">Índice</th>
+    <th style="color:#FFFFFF;padding:8px 10px;text-align:right;font-weight:600;">Último</th>
+    <th style="color:#FFFFFF;padding:8px 10px;text-align:right;font-weight:600;">Día</th>
+    <th style="color:#FFFFFF;padding:8px 10px;text-align:right;font-weight:600;">YTD</th>
+  </tr>
+  {% for r in rows %}
+  <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+    <td style="padding:7px 10px;color:#2C3E50;font-weight:500;">{{ r.name }}</td>
+    <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ r.price }}</td>
+    <td style="padding:7px 10px;text-align:right;font-weight:600;{{ flag(r.change_pct) }}">{{ pct_str(r.change_pct) }}</td>
+    <td style="padding:7px 10px;text-align:right;color:#5D6D7E;">{{ pct_str(r.ytd) }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" style="padding:10px;color:#7F8C8D;text-align:center;">Sin datos disponibles</td></tr>
+  {% endfor %}
+</table>
+{% endmacro %}
+
+{% macro movers_table(rows, is_gainer) %}
+<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:11px;">
+  <tr style="background:{{ '#1E6B3A' if is_gainer else '#7B1E1E' }};">
+    <th style="color:#FFF;padding:6px 8px;text-align:left;">Ticker</th>
+    <th style="color:#FFF;padding:6px 8px;text-align:right;">Precio</th>
+    <th style="color:#FFF;padding:6px 8px;text-align:right;">Cambio</th>
+    <th style="color:#FFF;padding:6px 8px;text-align:right;">Volumen</th>
+  </tr>
+  {% for r in rows %}
+  <tr style="background:{{ '#F0FBF4' if is_gainer else '#FDF0F0' }};border-bottom:1px solid #DEE2E6;">
+    <td style="padding:5px 8px;font-weight:700;color:#1B2A4A;">{{ r.ticker }}</td>
+    <td style="padding:5px 8px;text-align:right;">{{ r.price }}</td>
+    <td style="padding:5px 8px;text-align:right;font-weight:600;color:{{ '#27AE60' if is_gainer else '#E74C3C' }};">{{ r.change }}</td>
+    <td style="padding:5px 8px;text-align:right;color:#5D6D7E;">{{ r.volume }}</td>
+  </tr>
+  {% else %}
+  <tr><td colspan="4" style="padding:8px;color:#7F8C8D;text-align:center;">Sin datos</td></tr>
+  {% endfor %}
+</table>
+{% endmacro %}
+
+{# ===================== WRAPPER ===================== #}
+<table width="100%" cellpadding="0" cellspacing="0" border="0">
+  <tr>
+    <td align="center" style="padding:20px 10px;">
+    <table width="680" cellpadding="0" cellspacing="0" border="0" style="background:#FFFFFF;border-radius:6px;overflow:hidden;box-shadow:0 3px 15px rgba(0,0,0,0.12);">
+
+      {# ========== HEADER ========== #}
+      <tr>
+        <td style="background:linear-gradient(135deg,#1B2A4A 0%,#2E4170 100%);padding:28px 36px;">
+          <table width="100%"><tr>
+            <td>
+              <div style="color:#FFFFFF;font-size:26px;font-weight:700;letter-spacing:3px;margin:0;">FINANCIAL DAILY</div>
+              <div style="color:#A8C4E0;font-size:12px;margin:6px 0 0;letter-spacing:1px;">PORTFOLIO INTELLIGENCE &nbsp;|&nbsp; 60% RENTA VARIABLE &nbsp;|&nbsp; 40% RENTA FIJA</div>
+            </td>
+            <td align="right" style="vertical-align:top;">
+              <div style="color:#FFFFFF;font-size:14px;font-weight:600;">{{ date }}</div>
+              <div style="color:#A8C4E0;font-size:11px;margin-top:4px;">USA · Europa · LatAm</div>
+            </td>
+          </tr></table>
+        </td>
+      </tr>
+
+      {# ========== SNAPSHOT BAR ========== #}
+      {% if snapshot %}
+      <tr>
+        <td style="background:#2C3E50;padding:10px 36px;">
+          <table width="100%"><tr>
+            {% for item in snapshot %}
+            <td align="center" style="padding:0 4px;border-right:{{ '1px solid #3D5166' if not loop.last else 'none' }};">
+              <div style="color:#A8C4E0;font-size:10px;text-transform:uppercase;letter-spacing:.5px;">{{ item.name }}</div>
+              <div style="color:#FFFFFF;font-size:13px;font-weight:700;margin:2px 0;">{{ item.price }}</div>
+              <div style="font-size:11px;font-weight:600;{{ flag(item.change_pct) }}">{{ pct_str(item.change_pct) }}</div>
+            </td>
+            {% endfor %}
+          </tr></table>
+        </td>
+      </tr>
+      {% endif %}
+
+      {# ========== MACRO ========== #}
+      <tr>
+        <td style="padding:28px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #3498DB;padding-bottom:7px;margin-bottom:14px;">
+            🏦&nbsp; ENTORNO MACROECONÓMICO
+          </div>
+
+          {# General macro #}
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;margin-bottom:16px;">
+            <tr style="background:#2C3E50;">
+              <th style="color:#FFF;padding:8px 10px;text-align:left;">Indicador</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:right;">Valor</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:right;">Variación</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:center;">Período</th>
+            </tr>
+            {% for key in ["fed_rate","cpi","core_cpi","core_pce","unemployment","gdp"] %}
+            {% if key in macro %}
+            {% set m = macro[key] %}
+            <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+              <td style="padding:7px 10px;color:#2C3E50;">{{ m.label }}</td>
+              <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ m.value }}</td>
+              <td style="padding:7px 10px;text-align:right;color:#5D6D7E;">
+                {{ m.change if m.change else "-" }}
+              </td>
+              <td style="padding:7px 10px;text-align:center;color:#95A5A6;font-size:11px;">{{ m.date }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </table>
+
+          {# VIX #}
+          {% if "vix" in macro %}
+          {% set v = macro["vix"] %}
+          <div style="background:#F0F4F8;border-radius:4px;padding:10px 14px;font-size:12px;display:inline-block;margin-bottom:6px;">
+            <span style="color:#5D6D7E;">VIX: </span>
+            <strong style="color:#1B2A4A;">{{ v.value }}</strong>
+            <span style="{{ flag(v.change_pct if v.change_pct is defined else none, false) }}">{{ v.change }}</span>
+            <span style="color:#95A5A6;font-size:11px;"> ({{ v.date }})</span>
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+
+      {# ========== RENTA VARIABLE ========== #}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #27AE60;padding-bottom:7px;margin-bottom:14px;">
+            📈&nbsp; MERCADOS DE RENTA VARIABLE (60%)
+          </div>
+
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:10px 0 6px;text-transform:uppercase;letter-spacing:.5px;">🇺🇸 Mercados USA</div>
+          {{ market_table(us_markets) }}
+
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.5px;">🇪🇺 Mercados Europa</div>
+          {{ market_table(eu_markets) }}
+
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:16px 0 6px;text-transform:uppercase;letter-spacing:.5px;">🌎 Mercados LatAm</div>
+          {{ market_table(latam_markets) }}
+        </td>
+      </tr>
+
+      {# ========== SECTORES ========== #}
+      {% if sectors %}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #9B59B6;padding-bottom:7px;margin-bottom:14px;">
+            🏭&nbsp; DESEMPEÑO POR SECTORES (S&P 500)
+          </div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;">
+            <tr style="background:#2C3E50;">
+              <th style="color:#FFF;padding:7px 10px;text-align:left;">Sector</th>
+              <th style="color:#FFF;padding:7px 10px;text-align:right;">Día %</th>
+              <th style="color:#FFF;padding:7px 10px;text-align:right;">YTD %</th>
+            </tr>
+            {% for s in sectors | sort(attribute='change', reverse=true) %}
+            <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+              <td style="padding:6px 10px;color:#2C3E50;">{{ s.name }}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:700;{{ flag(s.change) }}">{{ "%+.2f%%" | format(s.change) }}</td>
+              <td style="padding:6px 10px;text-align:right;color:#5D6D7E;">{{ s.ytd }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </td>
+      </tr>
+      {% endif %}
+
+      {# ========== RENTA FIJA ========== #}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #E67E22;padding-bottom:7px;margin-bottom:14px;">
+            🏛️&nbsp; MERCADOS DE RENTA FIJA (40%)
+          </div>
+
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px;">Curva de Tipos USA (Treasuries)</div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;margin-bottom:16px;">
+            <tr style="background:#2C3E50;">
+              <th style="color:#FFF;padding:8px 10px;text-align:left;">Vencimiento</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:right;">Yield</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:right;">Var. Día</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:center;">Fecha</th>
+            </tr>
+            {% for key in ["yield_2y","yield_5y","yield_10y","yield_30y"] %}
+            {% if key in macro %}
+            {% set y = macro[key] %}
+            <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+              <td style="padding:7px 10px;color:#2C3E50;font-weight:500;">{{ y.label }}</td>
+              <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ y.value }}</td>
+              <td style="padding:7px 10px;text-align:right;font-weight:600;color:{{ '#27AE60' if y.change_positive else '#E74C3C' }};">{{ y.change }}</td>
+              <td style="padding:7px 10px;text-align:center;color:#95A5A6;font-size:11px;">{{ y.date }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </table>
+
+          {% if "yield_curve" in macro %}
+          {% set yc = macro["yield_curve"] %}
+          <div style="background:#FFF8E1;border-left:3px solid #F39C12;padding:10px 14px;border-radius:0 4px 4px 0;margin-bottom:16px;font-size:12px;">
+            <strong>Curva 10Y-2Y:</strong>
+            <span style="font-weight:700;color:{{ '#27AE60' if yc.change_positive else '#E74C3C' }};">{{ yc.value }}</span>
+            {% if not yc.change_positive %}
+            &nbsp;<span style="color:#E74C3C;">⚠️ Curva invertida</span>
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin:0 0 8px;text-transform:uppercase;letter-spacing:.5px;">Spreads de Crédito</div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;">
+            <tr style="background:#2C3E50;">
+              <th style="color:#FFF;padding:8px 10px;text-align:left;">Indicador</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:right;">Spread</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:right;">Var. Día</th>
+              <th style="color:#FFF;padding:8px 10px;text-align:center;">Fecha</th>
+            </tr>
+            {% for key in ["hy_spread","ig_spread"] %}
+            {% if key in macro %}
+            {% set sp = macro[key] %}
+            <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+              <td style="padding:7px 10px;color:#2C3E50;">{{ sp.label }}</td>
+              <td style="padding:7px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ sp.value }}</td>
+              <td style="padding:7px 10px;text-align:right;font-weight:600;color:{{ '#27AE60' if sp.change_positive else '#E74C3C' }};">{{ sp.change }}</td>
+              <td style="padding:7px 10px;text-align:center;color:#95A5A6;font-size:11px;">{{ sp.date }}</td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </table>
+        </td>
+      </tr>
+
+      {# ========== DIVISAS & COMMODITIES ========== #}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #1ABC9C;padding-bottom:7px;margin-bottom:14px;">
+            💱&nbsp; DIVISAS Y MATERIAS PRIMAS
+          </div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td width="49%" valign="top">
+                <div style="color:#2C3E50;font-size:11px;font-weight:700;margin-bottom:6px;text-transform:uppercase;">Divisas</div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;">
+                  <tr style="background:#2C3E50;">
+                    <th style="color:#FFF;padding:6px 8px;text-align:left;">Par</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Precio</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Día</th>
+                  </tr>
+                  {% for r in fx_rates %}
+                  <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+                    <td style="padding:5px 8px;color:#2C3E50;font-weight:500;">{{ r.name }}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:700;color:#1B2A4A;">{{ r.price }}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:600;{{ flag(r.change_pct) }}">{{ pct_str(r.change_pct) }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+              </td>
+              <td width="2%"></td>
+              <td width="49%" valign="top">
+                <div style="color:#2C3E50;font-size:11px;font-weight:700;margin-bottom:6px;text-transform:uppercase;">Materias Primas</div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:12px;">
+                  <tr style="background:#2C3E50;">
+                    <th style="color:#FFF;padding:6px 8px;text-align:left;">Activo</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Precio</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Día</th>
+                  </tr>
+                  {% for r in commodities %}
+                  <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+                    <td style="padding:5px 8px;color:#2C3E50;font-weight:500;">{{ r.name }}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:700;color:#1B2A4A;">{{ r.price }}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:600;{{ flag(r.change_pct) }}">{{ pct_str(r.change_pct) }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+
+      {# ========== MOVERS ========== #}
+      {% if gainers or losers %}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #E74C3C;padding-bottom:7px;margin-bottom:14px;">
+            🔥&nbsp; MOVIMIENTOS DESTACADOS DEL DÍA (Finviz Elite)
+          </div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td width="49%" valign="top">
+                <div style="color:#27AE60;font-size:12px;font-weight:700;margin-bottom:6px;">▲ TOP GAINERS</div>
+                {{ movers_table(gainers, true) }}
+              </td>
+              <td width="2%"></td>
+              <td width="49%" valign="top">
+                <div style="color:#E74C3C;font-size:12px;font-weight:700;margin-bottom:6px;">▼ TOP LOSERS</div>
+                {{ movers_table(losers, false) }}
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+      {% endif %}
+
+      {# ========== ANALYST RATINGS ========== #}
+      {% if analyst_ratings %}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #8E44AD;padding-bottom:7px;margin-bottom:14px;">
+            🎯&nbsp; CAMBIOS DE RECOMENDACIÓN (Finviz Elite)
+          </div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:11px;">
+            <tr style="background:#2C3E50;">
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Fecha</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Acción</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Broker</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Ticker</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:left;">Rating</th>
+              <th style="color:#FFF;padding:6px 8px;text-align:right;">Precio Obj.</th>
+            </tr>
+            {% for r in analyst_ratings %}
+            <tr style="background:{{ '#F8F9FA' if loop.index is odd else '#FFFFFF' }};border-bottom:1px solid #DEE2E6;">
+              <td style="padding:5px 8px;color:#95A5A6;">{{ r.date }}</td>
+              <td style="padding:5px 8px;font-weight:600;
+                color:{% if 'Upgrade' in r.action %}#27AE60{% elif 'Downgrade' in r.action %}#E74C3C{% else %}#E67E22{% endif %};">
+                {{ r.action }}
+              </td>
+              <td style="padding:5px 8px;color:#2C3E50;">{{ r.broker }}</td>
+              <td style="padding:5px 8px;font-weight:700;color:#1B2A4A;">{{ r.ticker }}</td>
+              <td style="padding:5px 8px;color:#5D6D7E;">{{ r.rating }}</td>
+              <td style="padding:5px 8px;text-align:right;color:#1B2A4A;">{{ r.target }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </td>
+      </tr>
+      {% endif %}
+
+      {# ========== NOTICIAS ========== #}
+      {% if news %}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #3498DB;padding-bottom:7px;margin-bottom:14px;">
+            📰&nbsp; NOTICIAS RELEVANTES DE MERCADOS (Finviz Elite)
+          </div>
+          {% for item in news %}
+          <div style="border-left:3px solid {{ '#3498DB' if loop.index <= 5 else '#BDC3C7' }};padding:8px 12px;margin-bottom:8px;background:{{ '#EBF5FB' if loop.index <= 5 else '#F8F9FA' }};border-radius:0 4px 4px 0;">
+            <a href="{{ item.url }}" style="color:#1B2A4A;text-decoration:none;font-size:13px;font-weight:{% if loop.index <= 5 %}600{% else %}400{% endif %};">
+              {{ item.title }}
+            </a>
+            <div style="color:#95A5A6;font-size:11px;margin-top:3px;">
+              <strong style="color:#5D6D7E;">{{ item.source }}</strong>
+              {% if item.date %}&nbsp;·&nbsp;{{ item.date }}{% endif %}
+              {% if item.time %}&nbsp;{{ item.time }}{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+
+      {# ========== FOOTER ========== #}
+      <tr>
+        <td style="background:#2C3E50;padding:20px 36px;margin-top:10px;">
+          <p style="color:#A8C4E0;font-size:11px;margin:0;text-align:center;letter-spacing:.3px;">
+            Generado automáticamente el <strong>{{ date }}</strong> a las {{ time }}
+            &nbsp;|&nbsp; Fuentes: Finviz Elite · FRED API · Yahoo Finance
+          </p>
+          <p style="color:#566573;font-size:10px;margin:6px 0 0;text-align:center;">
+            Este newsletter es solo para uso informativo y no constituye asesoramiento financiero.
+            La información puede presentar retrasos y errores. Consulte a su asesor antes de invertir.
+          </p>
+        </td>
+      </tr>
+
+    </table>
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

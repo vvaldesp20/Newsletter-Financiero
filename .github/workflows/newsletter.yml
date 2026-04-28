@@ -1,0 +1,66 @@
+name: Financial Daily Newsletter
+
+on:
+  schedule:
+    # 07:30 España (verano UTC+2 → 05:30 UTC | invierno UTC+1 → 06:30 UTC)
+    # Ajusta el cron si cambias de horario de verano/invierno
+    - cron: '30 5 * * 1-5'   # Lunes a Viernes 07:30 hora España (verano)
+  workflow_dispatch:           # Permite lanzar manualmente desde GitHub
+
+jobs:
+  send-newsletter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout codigo
+        uses: actions/checkout@v4
+
+      - name: Configurar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Crear archivo .env desde Secrets
+        run: |
+          cat > .env << 'ENVEOF'
+          FINVIZ_EMAIL=${{ secrets.FINVIZ_EMAIL }}
+          FINVIZ_PASSWORD=${{ secrets.FINVIZ_PASSWORD }}
+          FRED_API_KEY=${{ secrets.FRED_API_KEY }}
+          EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECIPIENTS=${{ secrets.EMAIL_RECIPIENTS }}
+          EMAIL_SMTP_HOST=smtp.gmail.com
+          EMAIL_SMTP_PORT=587
+          NEWSLETTER_TIME=07:30
+          ENVEOF
+
+      - name: Ejecutar newsletter
+        run: python main.py
+
+      - name: Guardar HTML como artefacto (7 dias)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newsletter-${{ github.run_id }}
+          path: output_latest.html
+          retention-days: 7
+
+      - name: Notificar fallo por email
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_SENDER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "⚠️ Error en Financial Daily Newsletter - ${{ github.run_id }}"
+          to: ${{ secrets.EMAIL_RECIPIENTS }}
+          from: Financial Daily <${{ secrets.EMAIL_SENDER }}>
+          body: |
+            El newsletter falló en la ejecución ${{ github.run_id }}.
+            Revisa los logs en: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
