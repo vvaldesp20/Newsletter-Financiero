@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import config
-from collectors import finviz_collector, market_data, stock_analysis
+from collectors import finviz_collector, market_data, portfolio_tracker, stock_analysis
 from generators import newsletter
 from sender import email_sender
 
@@ -64,20 +64,24 @@ def run() -> bool:
     logger.info("Recopilando datos de Finviz Elite...")
     finviz = finviz_collector.collect(config.FINVIZ_EMAIL, config.FINVIZ_PASSWORD)
 
-    # 3. Analyze stock ideas with yfinance fundamentals
+    # 3. Track portfolio positions (live prices)
+    logger.info("Rastreando posiciones del portfolio...")
+    portfolio = portfolio_tracker.track()
+
+    # 4. Analyze stock ideas with yfinance fundamentals
     logger.info("Analizando ideas de inversión...")
     finviz["stock_ideas"] = stock_analysis.analyze(finviz.get("stock_idea_tickers", []))
 
-    # 4. Render newsletter HTML
+    # 5. Render newsletter HTML
     logger.info("Generando HTML del newsletter...")
-    html = newsletter.render(market=market, finviz=finviz)
+    html = newsletter.render(market=market, finviz=finviz, portfolio=portfolio)
 
     # Save local HTML copy for debugging
     output_path = Path(__file__).parent / "output_latest.html"
     output_path.write_text(html, encoding="utf-8")
     logger.info(f"HTML guardado en: {output_path}")
 
-    # 5. Send email
+    # 6. Send email
     logger.info(f"Enviando newsletter a: {config.EMAIL_RECIPIENTS}")
     success = email_sender.send(
         html_content=html,

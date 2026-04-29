@@ -4,9 +4,44 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
+import config
+
 logger = logging.getLogger(__name__)
 
 TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
+
+MACRO_KEYWORDS = [
+    "fed", "federal reserve", "interest rate", "inflation", "cpi", "pce",
+    "gdp", "unemployment", "jobs report", "nonfarm", "powell", "ecb",
+    "recession", "tariff", "trade war", "treasury", "yield curve", "fomc",
+    "monetary policy", "fiscal", "rate hike", "rate cut", "bank of england",
+    "bank of japan", "boj", "bce", "debt ceiling", "budget", "earnings season",
+]
+
+
+def _classify_news(news: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Split news into portfolio-relevant and macro categories."""
+    tickers_lower = {t.lower() for t in config.PORTFOLIO_TICKERS}
+    # Also match by common name keywords for ETFs/stocks
+    name_keywords = {
+        "amazon", "microsoft", "alphabet", "google", "meta", "nvidia",
+        "semiconductor", "copper", "bitcoin", "ethereum", "latam", "airlines",
+        "chile", "china", "japan", "europe", "emerging", "s&p", "nasdaq",
+        "silver", "nu holdings", "asml",
+    }
+
+    portfolio_news, macro_news = [], []
+    for item in news:
+        title_lower = item.get("title", "").lower()
+        source_lower = item.get("source", "").lower()
+        combined = title_lower + " " + source_lower
+
+        if any(t in combined for t in tickers_lower) or any(kw in combined for kw in name_keywords):
+            portfolio_news.append(item)
+        elif any(kw in combined for kw in MACRO_KEYWORDS):
+            macro_news.append(item)
+
+    return portfolio_news[:12], macro_news[:10]
 
 
 def _build_snapshot(us_markets: list[dict]) -> list[dict]:
@@ -17,11 +52,14 @@ def _build_snapshot(us_markets: list[dict]) -> list[dict]:
 def render(
     market: dict,
     finviz: dict,
+    portfolio: dict,
 ) -> str:
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)), autoescape=False)
     template = env.get_template("newsletter.html")
 
     now = datetime.now()
+
+    news_portfolio, news_macro = _classify_news(finviz.get("news", []))
 
     context = {
         "date":     now.strftime("%A, %d de %B de %Y"),
@@ -40,11 +78,16 @@ def render(
         "commodities": market.get("commodities", []),
         # Sectors (yfinance ETFs)
         "sectors":         market.get("sectors", []),
+        # Portfolio
+        "portfolio_desarrollado": portfolio.get("desarrollado", []),
+        "portfolio_emergente":    portfolio.get("emergente", []),
+        "portfolio_megatrend":    portfolio.get("megatrend", []),
         # Finviz
         "gainers":         finviz.get("gainers", []),
         "losers":          finviz.get("losers", []),
         "analyst_ratings": finviz.get("analyst_ratings", []),
-        "news":            finviz.get("news", []),
+        "news_portfolio":  news_portfolio,
+        "news_macro":      news_macro,
         "calendar":        finviz.get("calendar", []),
         "stock_ideas":     finviz.get("stock_ideas", []),
     }
