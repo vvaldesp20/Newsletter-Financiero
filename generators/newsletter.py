@@ -20,9 +20,8 @@ MACRO_KEYWORDS = [
 
 
 def _classify_news(news: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Split news into portfolio-relevant and macro categories."""
+    """Split news into portfolio-relevant and macro/general categories."""
     tickers_lower = {t.lower() for t in config.PORTFOLIO_TICKERS}
-    # Also match by common name keywords for ETFs/stocks
     name_keywords = {
         "amazon", "microsoft", "alphabet", "google", "meta", "nvidia",
         "semiconductor", "copper", "bitcoin", "ethereum", "latam", "airlines",
@@ -30,7 +29,7 @@ def _classify_news(news: list[dict]) -> tuple[list[dict], list[dict]]:
         "silver", "nu holdings", "asml",
     }
 
-    portfolio_news, macro_news = [], []
+    portfolio_news, macro_news, other_news = [], [], []
     for item in news:
         title_lower = item.get("title", "").lower()
         source_lower = item.get("source", "").lower()
@@ -40,6 +39,11 @@ def _classify_news(news: list[dict]) -> tuple[list[dict], list[dict]]:
             portfolio_news.append(item)
         elif any(kw in combined for kw in MACRO_KEYWORDS):
             macro_news.append(item)
+        else:
+            other_news.append(item)
+
+    # Fill macro with general financial news if below the cap
+    macro_news += other_news[:max(0, 10 - len(macro_news))]
 
     return portfolio_news[:12], macro_news[:10]
 

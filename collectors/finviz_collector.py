@@ -333,7 +333,7 @@ def get_economic_calendar(session: requests.Session, max_events: int = 20) -> li
 def collect(email: str, password: str) -> dict:
     session = _login(email, password)
     return {
-        "news":               get_news(session, count=20),
+        "news":               get_news(session, count=60),
         "gainers":            get_top_gainers(session, count=8),
         "losers":             get_top_losers(session, count=8),
         "analyst_ratings":    get_analyst_ratings(session, count=8),

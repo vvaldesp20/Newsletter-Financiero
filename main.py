@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import config
-from collectors import finviz_collector, market_data, portfolio_tracker, stock_analysis
+from collectors import finviz_collector, market_data, market_news, portfolio_tracker, stock_analysis
 from generators import newsletter
 from sender import email_sender
 
@@ -63,6 +63,15 @@ def run() -> bool:
     # 2. Collect Finviz Elite data
     logger.info("Recopilando datos de Finviz Elite...")
     finviz = finviz_collector.collect(config.FINVIZ_EMAIL, config.FINVIZ_PASSWORD)
+
+    # 2b. Collect Yahoo Finance news (reliable fallback, no login required)
+    logger.info("Recopilando noticias de Yahoo Finance...")
+    yf_news = market_news.fetch()
+    # Merge: Finviz news first (deduped by title), then Yahoo Finance
+    finviz_titles = {n["title"] for n in finviz.get("news", [])}
+    merged_news = finviz.get("news", []) + [n for n in yf_news if n["title"] not in finviz_titles]
+    finviz["news"] = merged_news
+    logger.info(f"Total noticias combinadas: {len(merged_news)}")
 
     # 3. Track portfolio positions (live prices)
     logger.info("Rastreando posiciones del portfolio...")
