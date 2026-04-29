@@ -108,10 +108,11 @@ def run() -> bool:
     output_path.write_text(html, encoding="utf-8")
     logger.info(f"HTML guardado en: {output_path}")
 
-    # 6. Send email
-    logger.info(f"Enviando newsletter a: {config.EMAIL_RECIPIENTS}")
-    success = email_sender.send(
-        html_content=html,
+    # 6. Send link email (newsletter is published to GitHub Pages by the workflow)
+    page_url = "https://vvaldesp20.github.io/Newsletter-Financiero/"
+    logger.info(f"Enviando link del newsletter a: {config.EMAIL_RECIPIENTS}")
+    success = email_sender.send_link(
+        page_url=page_url,
         recipients=config.EMAIL_RECIPIENTS,
         sender=config.EMAIL_SENDER,
         password=config.EMAIL_PASSWORD,

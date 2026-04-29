@@ -2,9 +2,12 @@ name: Financial Daily Newsletter
 
 on:
   schedule:
-    # 08:30 Chile (invierno CLT UTC-4 → 12:30 UTC | verano CLST UTC-3 → ajustar a '30 11 * * 1-5')
-    - cron: '30 12 * * 1-5'  # Lunes a Viernes 08:30 hora Chile (invierno)
+    - cron: '30 12 * * 1-5'  # 08:30 CLT  (UTC-4): abril–agosto (invierno)
+    - cron: '30 11 * * 1-5'  # 08:30 CLST (UTC-3): agosto–abril (verano)
   workflow_dispatch:           # Permite lanzar manualmente desde GitHub
+
+permissions:
+  contents: write   # necesario para publicar en gh-pages
 
 jobs:
   send-newsletter:
@@ -40,6 +43,20 @@ jobs:
       - name: Ejecutar newsletter
         run: python main.py
 
+      - name: Preparar archivos para GitHub Pages
+        run: |
+          mkdir -p pages_out
+          cp output_latest.html pages_out/index.html
+          cp output_latest.html pages_out/$(date +%Y-%m-%d).html
+
+      - name: Publicar newsletter en GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./pages_out
+          keep_files: true            # mantiene historial de fechas anteriores
+          commit_message: "Newsletter ${{ github.run_id }} — $(date +%Y-%m-%d)"
+
       - name: Guardar HTML como artefacto (7 dias)
         if: always()
         uses: actions/upload-artifact@v4
@@ -56,7 +73,7 @@ jobs:
           server_port: 587
           username: ${{ secrets.EMAIL_SENDER }}
           password: ${{ secrets.EMAIL_PASSWORD }}
-          subject: "⚠️ Error en Financial Daily Newsletter - ${{ github.run_id }}"
+          subject: "Error en Financial Daily Newsletter - ${{ github.run_id }}"
           to: ${{ secrets.EMAIL_RECIPIENTS }}
           from: Financial Daily <${{ secrets.EMAIL_SENDER }}>
           body: |
