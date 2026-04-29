@@ -315,25 +315,70 @@
       </tr>
 
       {# ========== MOVERS ========== #}
-      {% if gainers or losers %}
+      {% if gainers or losers or portfolio_gainers or portfolio_losers %}
       <tr>
         <td style="padding:20px 36px 10px;">
           <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #E74C3C;padding-bottom:7px;margin-bottom:14px;">
-            🔥&nbsp; MOVIMIENTOS DESTACADOS DEL DÍA (Finviz Elite)
+            🔥&nbsp; MOVIMIENTOS DESTACADOS DEL DÍA
           </div>
+          {% if gainers or losers %}
           <table width="100%" cellpadding="0" cellspacing="0" border="0">
             <tr>
               <td width="49%" valign="top">
-                <div style="color:#27AE60;font-size:12px;font-weight:700;margin-bottom:6px;">▲ TOP GAINERS</div>
+                <div style="color:#27AE60;font-size:12px;font-weight:700;margin-bottom:6px;">▲ TOP GAINERS (Mercado)</div>
                 {{ movers_table(gainers, true) }}
               </td>
               <td width="2%"></td>
               <td width="49%" valign="top">
-                <div style="color:#E74C3C;font-size:12px;font-weight:700;margin-bottom:6px;">▼ TOP LOSERS</div>
+                <div style="color:#E74C3C;font-size:12px;font-weight:700;margin-bottom:6px;">▼ TOP LOSERS (Mercado)</div>
                 {{ movers_table(losers, false) }}
               </td>
             </tr>
           </table>
+          {% endif %}
+          {% if portfolio_gainers or portfolio_losers %}
+          {% if gainers or losers %}<div style="height:16px;"></div>{% endif %}
+          <div style="color:#2C3E50;font-size:12px;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Tu Portfolio hoy</div>
+          <table width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td width="49%" valign="top">
+                <div style="color:#27AE60;font-size:11px;font-weight:700;margin-bottom:5px;">▲ Mejores posiciones</div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:11px;">
+                  <tr style="background:#1E6B3A;">
+                    <th style="color:#FFF;padding:6px 8px;text-align:left;">Ticker</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Precio</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Día %</th>
+                  </tr>
+                  {% for r in portfolio_gainers %}
+                  <tr style="background:#F0FBF4;border-bottom:1px solid #DEE2E6;">
+                    <td style="padding:5px 8px;font-weight:700;color:#1B2A4A;">{{ r.ticker }}</td>
+                    <td style="padding:5px 8px;text-align:right;">{{ r.price }}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:600;color:#27AE60;">{{ pct_str(r.change_pct) }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+              </td>
+              <td width="2%"></td>
+              <td width="49%" valign="top">
+                <div style="color:#E74C3C;font-size:11px;font-weight:700;margin-bottom:5px;">▼ Peores posiciones</div>
+                <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;font-size:11px;">
+                  <tr style="background:#7B1E1E;">
+                    <th style="color:#FFF;padding:6px 8px;text-align:left;">Ticker</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Precio</th>
+                    <th style="color:#FFF;padding:6px 8px;text-align:right;">Día %</th>
+                  </tr>
+                  {% for r in portfolio_losers %}
+                  <tr style="background:#FDF0F0;border-bottom:1px solid #DEE2E6;">
+                    <td style="padding:5px 8px;font-weight:700;color:#1B2A4A;">{{ r.ticker }}</td>
+                    <td style="padding:5px 8px;text-align:right;">{{ r.price }}</td>
+                    <td style="padding:5px 8px;text-align:right;font-weight:600;color:#E74C3C;">{{ pct_str(r.change_pct) }}</td>
+                  </tr>
+                  {% endfor %}
+                </table>
+              </td>
+            </tr>
+          </table>
+          {% endif %}
         </td>
       </tr>
       {% endif %}

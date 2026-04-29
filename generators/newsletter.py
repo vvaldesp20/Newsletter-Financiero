@@ -86,10 +86,12 @@ def render(
         "portfolio_desarrollado": portfolio.get("desarrollado", []),
         "portfolio_emergente":    portfolio.get("emergente", []),
         "portfolio_megatrend":    portfolio.get("megatrend", []),
-        # Finviz
-        "gainers":         finviz.get("gainers", []),
-        "losers":          finviz.get("losers", []),
-        "analyst_ratings": finviz.get("analyst_ratings", []),
+        # Movers (Finviz gainers/losers; fallback to portfolio movers)
+        "gainers":            finviz.get("gainers", []),
+        "losers":             finviz.get("losers", []),
+        "portfolio_gainers":  finviz.get("portfolio_gainers", []),
+        "portfolio_losers":   finviz.get("portfolio_losers", []),
+        "analyst_ratings":    finviz.get("analyst_ratings", []),
         "news_portfolio":  news_portfolio,
         "news_macro":      news_macro,
         "calendar":        finviz.get("calendar", []),

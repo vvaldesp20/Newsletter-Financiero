@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import config
-from collectors import finviz_collector, market_data, market_news, portfolio_tracker, stock_analysis
+from collectors import finviz_collector, market_data, market_news, portfolio_ratings, portfolio_tracker, stock_analysis
 from generators import newsletter
 from sender import email_sender
 
@@ -79,7 +79,25 @@ def run() -> bool:
 
     # 4. Analyze stock ideas with yfinance fundamentals
     logger.info("Analizando ideas de inversión...")
-    finviz["stock_ideas"] = stock_analysis.analyze(finviz.get("stock_idea_tickers", []))
+    # Use Finviz screener tickers when available; always fallback to curated watchlist
+    idea_tickers = finviz.get("stock_idea_tickers") or config.STOCK_WATCHLIST
+    finviz["stock_ideas"] = stock_analysis.analyze(idea_tickers[:8])
+
+    # 4b. Analyst ratings: Finviz first, yfinance as fallback
+    if not finviz.get("analyst_ratings"):
+        logger.info("Finviz ratings vacíos — usando yfinance upgrades/downgrades...")
+        finviz["analyst_ratings"] = portfolio_ratings.fetch()
+
+    # 4c. Compute portfolio movers (top gainers/losers from the user's own portfolio)
+    all_positions = (
+        portfolio.get("desarrollado", [])
+        + portfolio.get("emergente", [])
+        + portfolio.get("megatrend", [])
+    )
+    with_change = [p for p in all_positions if p.get("change_pct") is not None]
+    with_change.sort(key=lambda x: x["change_pct"], reverse=True)
+    finviz["portfolio_gainers"] = with_change[:5]
+    finviz["portfolio_losers"]  = with_change[-5:][::-1] if len(with_change) >= 5 else []
 
     # 5. Render newsletter HTML
     logger.info("Generando HTML del newsletter...")

@@ -54,3 +54,10 @@ PORTFOLIO = {
 
 # Flat list of all trackable tickers (for news filtering)
 PORTFOLIO_TICKERS = [t for holdings in PORTFOLIO.values() for t, _ in holdings]
+
+# Curated watchlist for stock ideas (analyzed via yfinance, no Finviz needed)
+STOCK_WATCHLIST = [
+    "NVDA", "AAPL", "JPM", "V",   "LLY",  "AVGO",
+    "TSM",  "AMD",  "PLTR","ARM", "MELI", "XOM",
+    "BRK-B","BABA", "UBER","COIN","HIMS", "RKLB",
+]
