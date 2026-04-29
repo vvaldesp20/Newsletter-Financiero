@@ -28,16 +28,14 @@ jobs:
 
       - name: Crear archivo .env desde Secrets
         run: |
-          cat > .env << 'ENVEOF'
-          FINVIZ_EMAIL=${{ secrets.FINVIZ_EMAIL }}
-          FINVIZ_PASSWORD=${{ secrets.FINVIZ_PASSWORD }}
-          EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}
-          EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}
-          EMAIL_RECIPIENTS=${{ secrets.EMAIL_RECIPIENTS }}
-          EMAIL_SMTP_HOST=smtp.gmail.com
-          EMAIL_SMTP_PORT=587
-          NEWSLETTER_TIME=07:30
-          ENVEOF
+          echo "FINVIZ_EMAIL=${{ secrets.FINVIZ_EMAIL }}" >> .env
+          echo "FINVIZ_PASSWORD=${{ secrets.FINVIZ_PASSWORD }}" >> .env
+          echo "EMAIL_SENDER=${{ secrets.EMAIL_SENDER }}" >> .env
+          echo "EMAIL_PASSWORD=${{ secrets.EMAIL_PASSWORD }}" >> .env
+          echo "EMAIL_RECIPIENTS=${{ secrets.EMAIL_RECIPIENTS }}" >> .env
+          echo "EMAIL_SMTP_HOST=smtp.gmail.com" >> .env
+          echo "EMAIL_SMTP_PORT=587" >> .env
+          echo "NEWSLETTER_TIME=08:30" >> .env
 
       - name: Ejecutar newsletter
         run: python main.py
