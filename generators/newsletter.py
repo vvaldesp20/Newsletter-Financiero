@@ -20,20 +20,18 @@ MACRO_KEYWORDS = [
 
 
 def _classify_news(news: list[dict]) -> tuple[list[dict], list[dict]]:
-    """Split news into portfolio-relevant and macro/general categories."""
+    """Split news into portfolio-relevant and macro/general categories (10 each)."""
     tickers_lower = {t.lower() for t in config.PORTFOLIO_TICKERS}
     name_keywords = {
         "amazon", "microsoft", "alphabet", "google", "meta", "nvidia",
         "semiconductor", "copper", "bitcoin", "ethereum", "latam", "airlines",
         "chile", "china", "japan", "europe", "emerging", "s&p", "nasdaq",
-        "silver", "nu holdings", "asml",
+        "silver", "nu holdings", "asml", "vanguard", "ishares", "etf",
     }
 
     portfolio_news, macro_news, other_news = [], [], []
     for item in news:
-        title_lower = item.get("title", "").lower()
-        source_lower = item.get("source", "").lower()
-        combined = title_lower + " " + source_lower
+        combined = (item.get("title", "") + " " + item.get("source", "")).lower()
 
         if any(t in combined for t in tickers_lower) or any(kw in combined for kw in name_keywords):
             portfolio_news.append(item)
@@ -42,10 +40,10 @@ def _classify_news(news: list[dict]) -> tuple[list[dict], list[dict]]:
         else:
             other_news.append(item)
 
-    # Fill macro with general financial news if below the cap
+    # Fill macro to 10 with general financial news if needed
     macro_news += other_news[:max(0, 10 - len(macro_news))]
 
-    return portfolio_news[:12], macro_news[:10]
+    return portfolio_news[:10], macro_news[:10]
 
 
 def _build_snapshot(us_markets: list[dict]) -> list[dict]:
