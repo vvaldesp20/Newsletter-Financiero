@@ -1,10 +1,7 @@
 name: Financial Daily Newsletter
 
 on:
-  schedule:
-    - cron: '30 12 * * 1-5'  # 08:30 CLT  (UTC-4): abril–agosto (invierno)
-    - cron: '30 11 * * 1-5'  # 08:30 CLST (UTC-3): agosto–abril (verano)
-  workflow_dispatch:           # Permite lanzar manualmente desde GitHub
+  workflow_dispatch:  # Triggered by cron-job.org at 08:30 America/Santiago (Mon–Fri)
 
 permissions:
   contents: write   # necesario para publicar en gh-pages
