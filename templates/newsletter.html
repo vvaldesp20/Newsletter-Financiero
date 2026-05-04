@@ -99,6 +99,58 @@
       </tr>
       {% endif %}
 
+      {# ========== NOTICIAS DE PORTFOLIO ========== #}
+      {% if news_portfolio %}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #2ECC71;padding-bottom:7px;margin-bottom:14px;">
+            💼&nbsp; NOTICIAS DE TU PORTFOLIO
+          </div>
+          {% for item in news_portfolio %}
+          <div style="border-left:3px solid {{ '#27AE60' if loop.index <= 3 else '#BDC3C7' }};padding:10px 14px;margin-bottom:10px;background:{{ '#EAFAF1' if loop.index <= 3 else '#F8F9FA' }};border-radius:0 4px 4px 0;">
+            <a href="{{ item.url }}" style="color:#1B2A4A;text-decoration:none;font-size:13px;font-weight:600;line-height:1.4;display:block;">
+              {{ item.title }}
+            </a>
+            {% if item.summary %}
+            <div style="color:#4A5568;font-size:11.5px;margin-top:5px;line-height:1.55;">{{ item.summary }}</div>
+            {% endif %}
+            <div style="color:#95A5A6;font-size:10px;margin-top:5px;">
+              <strong style="color:#5D6D7E;">{{ item.source }}</strong>
+              {% if item.date %}&nbsp;·&nbsp;{{ item.date }}{% endif %}
+              {% if item.time %}&nbsp;{{ item.time }}{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+
+      {# ========== NOTICIAS MACRO & MERCADOS ========== #}
+      {% if news_macro %}
+      <tr>
+        <td style="padding:20px 36px 10px;">
+          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #3498DB;padding-bottom:7px;margin-bottom:14px;">
+            🌐&nbsp; MACRO & MERCADOS
+          </div>
+          {% for item in news_macro %}
+          <div style="border-left:3px solid {{ '#3498DB' if loop.index <= 3 else '#BDC3C7' }};padding:10px 14px;margin-bottom:10px;background:{{ '#EBF5FB' if loop.index <= 3 else '#F8F9FA' }};border-radius:0 4px 4px 0;">
+            <a href="{{ item.url }}" style="color:#1B2A4A;text-decoration:none;font-size:13px;font-weight:600;line-height:1.4;display:block;">
+              {{ item.title }}
+            </a>
+            {% if item.summary %}
+            <div style="color:#4A5568;font-size:11.5px;margin-top:5px;line-height:1.55;">{{ item.summary }}</div>
+            {% endif %}
+            <div style="color:#95A5A6;font-size:10px;margin-top:5px;">
+              <strong style="color:#5D6D7E;">{{ item.source }}</strong>
+              {% if item.date %}&nbsp;·&nbsp;{{ item.date }}{% endif %}
+              {% if item.time %}&nbsp;{{ item.time }}{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </td>
+      </tr>
+      {% endif %}
+
       {# ========== PORTFOLIO ========== #}
       {% if portfolio_desarrollado or portfolio_emergente or portfolio_megatrend %}
       <tr>
@@ -116,6 +168,7 @@
               <th style="color:#FFF;padding:6px 10px;text-align:left;">Nombre</th>
               <th style="color:#FFF;padding:6px 10px;text-align:right;">Precio</th>
               <th style="color:#FFF;padding:6px 10px;text-align:right;">Día %</th>
+              <th style="color:#FFF;padding:6px 10px;text-align:right;">MTD %</th>
               <th style="color:#FFF;padding:6px 10px;text-align:right;">YTD %</th>
             </tr>
             {% for r in rows %}
@@ -124,6 +177,7 @@
               <td style="padding:6px 10px;color:#5D6D7E;font-size:11px;">{{ r.name }}</td>
               <td style="padding:6px 10px;text-align:right;font-weight:700;color:#1B2A4A;">{{ r.price }}</td>
               <td style="padding:6px 10px;text-align:right;font-weight:600;{{ flag(r.change_pct) }}">{{ pct_str(r.change_pct) }}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:600;{{ flag(r.mtd) }}">{{ pct_str(r.mtd) }}</td>
               <td style="padding:6px 10px;text-align:right;{{ flag(r.ytd) }}">{{ pct_str(r.ytd) }}</td>
             </tr>
             {% endfor %}
@@ -483,58 +537,6 @@
             </tr>
             {% endfor %}
           </table>
-        </td>
-      </tr>
-      {% endif %}
-
-      {# ========== NOTICIAS DE PORTFOLIO ========== #}
-      {% if news_portfolio %}
-      <tr>
-        <td style="padding:20px 36px 10px;">
-          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #2ECC71;padding-bottom:7px;margin-bottom:14px;">
-            💼&nbsp; NOTICIAS DE TU PORTFOLIO
-          </div>
-          {% for item in news_portfolio %}
-          <div style="border-left:3px solid {{ '#27AE60' if loop.index <= 3 else '#BDC3C7' }};padding:10px 14px;margin-bottom:10px;background:{{ '#EAFAF1' if loop.index <= 3 else '#F8F9FA' }};border-radius:0 4px 4px 0;">
-            <a href="{{ item.url }}" style="color:#1B2A4A;text-decoration:none;font-size:13px;font-weight:600;line-height:1.4;display:block;">
-              {{ item.title }}
-            </a>
-            {% if item.summary %}
-            <div style="color:#4A5568;font-size:11.5px;margin-top:5px;line-height:1.55;">{{ item.summary }}</div>
-            {% endif %}
-            <div style="color:#95A5A6;font-size:10px;margin-top:5px;">
-              <strong style="color:#5D6D7E;">{{ item.source }}</strong>
-              {% if item.date %}&nbsp;·&nbsp;{{ item.date }}{% endif %}
-              {% if item.time %}&nbsp;{{ item.time }}{% endif %}
-            </div>
-          </div>
-          {% endfor %}
-        </td>
-      </tr>
-      {% endif %}
-
-      {# ========== NOTICIAS MACRO & MERCADOS ========== #}
-      {% if news_macro %}
-      <tr>
-        <td style="padding:20px 36px 10px;">
-          <div style="color:#1B2A4A;font-size:16px;font-weight:700;border-bottom:2px solid #3498DB;padding-bottom:7px;margin-bottom:14px;">
-            🌐&nbsp; MACRO & MERCADOS
-          </div>
-          {% for item in news_macro %}
-          <div style="border-left:3px solid {{ '#3498DB' if loop.index <= 3 else '#BDC3C7' }};padding:10px 14px;margin-bottom:10px;background:{{ '#EBF5FB' if loop.index <= 3 else '#F8F9FA' }};border-radius:0 4px 4px 0;">
-            <a href="{{ item.url }}" style="color:#1B2A4A;text-decoration:none;font-size:13px;font-weight:600;line-height:1.4;display:block;">
-              {{ item.title }}
-            </a>
-            {% if item.summary %}
-            <div style="color:#4A5568;font-size:11.5px;margin-top:5px;line-height:1.55;">{{ item.summary }}</div>
-            {% endif %}
-            <div style="color:#95A5A6;font-size:10px;margin-top:5px;">
-              <strong style="color:#5D6D7E;">{{ item.source }}</strong>
-              {% if item.date %}&nbsp;·&nbsp;{{ item.date }}{% endif %}
-              {% if item.time %}&nbsp;{{ item.time }}{% endif %}
-            </div>
-          </div>
-          {% endfor %}
         </td>
       </tr>
       {% endif %}

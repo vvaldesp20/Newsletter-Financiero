@@ -27,15 +27,19 @@ def _fetch_quote(ticker: str) -> dict | None:
     return None
 
 
-def _ytd(ticker: str) -> float | None:
+def _performance(ticker: str) -> tuple[float | None, float | None]:
+    """Returns (ytd_pct, mtd_pct) in a single history call."""
     try:
-        start = f"{datetime.now().year}-01-01"
-        hist = yf.Ticker(ticker).history(start=start)
-        if len(hist) >= 2:
-            return round(((float(hist["Close"].iloc[-1]) - float(hist["Close"].iloc[0])) / float(hist["Close"].iloc[0])) * 100, 2)
+        now = datetime.now()
+        hist = yf.Ticker(ticker).history(start=f"{now.year}-01-01")
+        if len(hist) < 2:
+            return None, None
+        ytd = round(((float(hist["Close"].iloc[-1]) - float(hist["Close"].iloc[0])) / float(hist["Close"].iloc[0])) * 100, 2)
+        month_hist = hist[hist.index.month == now.month]
+        mtd = round(((float(month_hist["Close"].iloc[-1]) - float(month_hist["Close"].iloc[0])) / float(month_hist["Close"].iloc[0])) * 100, 2) if len(month_hist) >= 2 else None
+        return ytd, mtd
     except Exception:
-        pass
-    return None
+        return None, None
 
 
 def _fmt(price: float) -> str:
@@ -49,11 +53,11 @@ def _fmt(price: float) -> str:
 def _build_row(ticker: str, name: str) -> dict:
     q = _fetch_quote(ticker)
     if q is None:
-        return {"ticker": ticker, "name": name, "price": "-", "change_pct": None, "ytd": None}
+        return {"ticker": ticker, "name": name, "price": "-", "change_pct": None, "ytd": None, "mtd": None}
     price, prev = q["price"], q["prev"]
     chg = round(((price - prev) / prev) * 100, 2)
-    ytd = _ytd(ticker)
-    return {"ticker": ticker, "name": name, "price": _fmt(price), "change_pct": chg, "ytd": ytd}
+    ytd, mtd = _performance(ticker)
+    return {"ticker": ticker, "name": name, "price": _fmt(price), "change_pct": chg, "ytd": ytd, "mtd": mtd}
 
 
 def track() -> dict:
