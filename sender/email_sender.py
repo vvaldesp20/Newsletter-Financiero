@@ -91,8 +91,10 @@ def _smtp_send(msg, sender, password, recipients, smtp_host, smtp_port) -> bool:
             server.ehlo()
             server.starttls()
             server.login(sender, password)
-            server.sendmail(sender, recipients, msg.as_string())
-        logger.info(f"Email sent to: {recipients}")
+            raw = msg.as_string()
+            for recipient in recipients:
+                server.sendmail(sender, [recipient], raw)
+                logger.info(f"Email sent to: {recipient}")
         return True
     except smtplib.SMTPAuthenticationError:
         logger.error("SMTP authentication failed — check EMAIL_SENDER and EMAIL_PASSWORD")
